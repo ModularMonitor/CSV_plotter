@@ -1,1 +1,3 @@
-First build using Github Actions.
+Plots use an algorithm to smooth a bit now
+Now you can add this in a line to plot in the graph the unit of measure: #UNIDADE:<unit of measure>
+Now it shows the X axis values too like the Y (min, max, lines and such)
