@@ -183,7 +183,7 @@ void CSV_drawer::plot_to(const std::string& save_path, const uint16_t resolution
 
 	// graph
 
-	constexpr float begin_width_graph = max_base_resolution_multiplier * 30.0f;
+	constexpr float begin_width_graph = max_base_resolution_multiplier * 70.0f;
 	constexpr float begin_height_graph = base_draw_h * 0.14f;
 	constexpr float end_width_graph = base_draw_w - max_base_resolution_multiplier * 30.0f;
 	constexpr float end_height_graph = base_draw_h - max_base_resolution_multiplier * 60.0f;
@@ -199,6 +199,16 @@ void CSV_drawer::plot_to(const std::string& save_path, const uint16_t resolution
 		al_map_rgb(235, 235, 235)
 	);
 
+
+	const long double values[] = {
+		(abs(m_self_sum.max - m_self_sum.min) * 5.0L / 5) + m_self_sum.min, // 500 e 300 -> 500 - 300 + 300
+		(abs(m_self_sum.max - m_self_sum.min) * 4.0L / 5) + m_self_sum.min,
+		(abs(m_self_sum.max - m_self_sum.min) * 3.0L / 5) + m_self_sum.min,
+		(abs(m_self_sum.max - m_self_sum.min) * 2.0L / 5) + m_self_sum.min,
+		(abs(m_self_sum.max - m_self_sum.min) * 1.0L / 5) + m_self_sum.min,
+		m_self_sum.min
+	};
+
 	const struct tm times[] = {
 		utc_to_time(get_point(data_size * 0 / 5).m_time_pc),
 		utc_to_time(get_point(data_size * 1 / 5).m_time_pc),
@@ -208,6 +218,34 @@ void CSV_drawer::plot_to(const std::string& save_path, const uint16_t resolution
 		utc_to_time(get_point(data_size - 1).m_time_pc)
 	};
 
+
+	for (size_t p = 0; p < std::size(values); ++p) {
+		const float py = begin_height_graph + max_height_graph * p / (std::size(values) - 1) - font_factor_10 * 0.5f;
+		const float px = begin_width_graph - max_base_resolution_multiplier * 7.5f;
+
+		const float rec_x1 = begin_width_graph;
+		const float rec_x2 = end_width_graph;
+		const float rec_y1 = begin_height_graph + max_height_graph * p / (std::size(values) - 1) - max_base_resolution_multiplier;
+		const float rec_y2 = begin_height_graph + max_height_graph * p / (std::size(values) - 1) + max_base_resolution_multiplier;
+
+		const auto& val = values[p];
+
+		al_draw_textf(m_font_10, al_map_rgb(0, 0, 0),
+			px,
+			py + max_base_resolution_multiplier * 1.5f,
+			ALLEGRO_ALIGN_RIGHT, "%.2lf %s", val, m_measurement.c_str());
+
+		if (p == 0 || p == std::size(values)) continue;
+
+		al_draw_filled_rectangle(
+			rec_x1, rec_y1,
+			rec_x2, rec_y2,
+			al_map_rgb(200, 200, 200)
+		);
+	}
+
+
+
 	// make any resolution [0..base_*] but vertical
 	ALLEGRO_TRANSFORM vf{};
 	al_identity_transform(&vf);
@@ -215,7 +253,6 @@ void CSV_drawer::plot_to(const std::string& save_path, const uint16_t resolution
 	al_rotate_transform(&vf, -ALLEGRO_PI * 0.5f); // rotated counter clock! x is y and x > 0 is up the screen. y is x, y > 0 is x > 0.
 	al_use_transform(&vf);
 
-	//al_draw_filled_circle(0.2f * base_draw_w, 0.2f * base_draw_h, 250.0f, al_map_rgb(200, 25, 16));
 
 	for (size_t p = 0; p < std::size(times); ++p) {
 		const float py = begin_width_graph + max_width_graph * p / (std::size(times) - 1) - font_factor_10;

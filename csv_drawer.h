@@ -37,5 +37,5 @@ public:
 	CSV_drawer();
 	~CSV_drawer();
 
-	void plot_to(const std::string& save_path, const uint16_t resolution = 16, float* tracker_progress = nullptr);
+	void plot_to(const std::string& save_path, const uint16_t resolution = 2, float* tracker_progress = nullptr);
 };

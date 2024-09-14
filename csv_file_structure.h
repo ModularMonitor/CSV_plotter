@@ -28,7 +28,9 @@ public:
 protected:
 	std::vector<each_block> m_data;
 	math_props m_self_sum{};
+	std::string m_measurement;
 
+	void average_all(const int depth);
 	each& get_point(const size_t) const;
 	size_t calc_data_size() const;
 public:

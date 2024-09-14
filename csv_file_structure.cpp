@@ -56,6 +56,45 @@ void CSV_Item::each_block::calculate()
 	// variancia_amostra is DONE already too!
 }
 
+void CSV_Item::average_all(const int depth)
+{
+	const size_t limit = calc_data_size();
+	if (limit < static_cast<size_t>(depth)) return;
+
+	std::vector<long double> temp;
+
+	const auto check_valid_raw = [&](const size_t ref, const int off) {
+		return off < 0 ? ((ref - static_cast<size_t>(off) < ref)) : true;
+	};
+	const auto check_valid_array = [&](const size_t ref, const int off) {
+		if (!check_valid_raw(ref, off)) return false;
+		const size_t res = (off < 0 ? (ref - static_cast<size_t>(-off)) : (ref + static_cast<size_t>(off)));
+		return res < limit;
+	};
+
+	for (size_t p = 0; p < limit; ++p)
+	{
+		const long double orig = get_point(p).m_value;
+		temp.push_back(orig);
+
+		long double factor_div = 1.0L;
+
+		for (int off = -depth; off <= depth; ++off) {
+			if (!check_valid_array(p, off)) continue;
+			const size_t res = (off < 0 ? (p - static_cast<size_t>(-off)) : (p + static_cast<size_t>(off)));
+			const long double point_val = get_point(res).m_value;
+
+			const long double factor = (0.005L * pow(abs(static_cast<long double>(off)) / depth, 0.25));
+			factor_div += factor;
+			temp[p] += point_val * factor;
+		}
+
+		temp[p] /= factor_div;
+	}
+
+	for (size_t p = 0; p < limit; ++p) get_point(p).m_value = temp[p];
+}
+
 CSV_Item::each& CSV_Item::get_point(const size_t v) const
 {
 	const size_t total_len = calc_data_size();
@@ -84,6 +123,7 @@ size_t CSV_Item::load_from(const std::string& file_name)
 	m_data.clear();
 	m_data.push_back(each_block()); // has at least one
 	m_self_sum = {};
+	m_measurement = "";
 
 	size_t skips = 0;
 
@@ -92,6 +132,14 @@ size_t CSV_Item::load_from(const std::string& file_name)
 		std::getline(in, buf);
 
 		each one;
+
+		constexpr char measurement_key[] = "#UNIDADE:";
+		if (buf.length() >= std::size(measurement_key) &&
+			strncmp(measurement_key, buf.c_str(), std::size(measurement_key) - 1) == 0)
+		{
+			m_measurement = buf.substr(std::size(measurement_key) - 1);
+			continue;
+		}
 
 		const auto got = sscanf_s(buf.c_str(), "%llu;%llu;%lf", &one.m_time_device, &one.m_time_pc, &one.m_value);
 		if (got != 3) {
@@ -131,6 +179,8 @@ size_t CSV_Item::load_from(const std::string& file_name)
 
 	// desvio padrao DONE
 	m_self_sum.desvio_padrao = sqrtl(m_self_sum.variancia_amostra);
+
+	for(size_t p = 0; p < 3; ++p) average_all(5 + static_cast<int>(p * 10));
 
 	return skips - 1; // if -1, did not read a thing!
 }

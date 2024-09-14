@@ -31,7 +31,7 @@ int main()
 		});
 
 		try {
-			item.plot_to(targ_path + "_.png", 16, &track);
+			item.plot_to(targ_path + "_.png", 2, &track);
 		}
 		catch (const std::exception& e) {
 			std::cout << "Failed on " << targ_path << "'s plot because of exception: " << e.what() << std::endl;
@@ -40,8 +40,8 @@ int main()
 		thr.join();
 
 		if (track == 1.0f) {
-			std::cout << "Done: " << targ_path << ". Resting for 2 seconds and doing next..." << std::endl;
-			std::this_thread::sleep_for(std::chrono::seconds(2));
+			std::cout << "Done: " << targ_path << ". Resting for NO seconds and doing next..." << std::endl;
+			//std::this_thread::sleep_for(std::chrono::seconds(2));
 		}
 	}
 }
